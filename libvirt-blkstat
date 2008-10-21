@@ -1,8 +1,11 @@
 #!/usr/bin/python
+# vim: set fileencoding=utf-8 :
 #
 # Munin plugin to show the I/O load of libvirt managed virtual machines
 # 
-# Copyright  Guido Guenther <agx@sigxcpu.org>
+# Copyright 2008 Guido Guenther <agx@sigxcpu.org>
+#
+# Licesnse: GPLv2
 #
 # depends: python-libvirt, python-libxml2
 #
@@ -26,8 +29,7 @@ def print_config(uri):
     print """graph_title Virtual Domain Block Device I/O
 graph_vlabel Bytes read (-)/ written (+) per ${graph_period}
 graph_category Virtual Machines
-graph_info This graph shows the block device I/O of the virtual machines
-"""
+graph_info This graph shows the block device I/O of the virtual machines"""
 
     conn = libvirt.openReadOnly(uri)
     ids = conn.listDomainsID()

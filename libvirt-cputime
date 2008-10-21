@@ -6,6 +6,8 @@
 # 
 # Copyright 2008 Guido Guenther <agx@sigxcpu.org>
 #
+# License: GPLv2
+#
 # depends: python-libvirt
 #
 # If you don't want to use the default uri use:
