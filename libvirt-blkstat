@@ -1,0 +1,113 @@
+#!/usr/bin/python
+#
+# Munin plugin to show the I/O load of libvirt managed virtual machines
+# 
+# Copyright  Guido Guenther <agx@sigxcpu.org>
+#
+# depends: python-libvirt, python-libxml2
+#
+# If you don't want to use the default uri use:
+# 
+# [libvirt-*]
+# env.uri qemu:///system
+#
+# in your plugin configuration
+
+import re, sys, os
+import libvirt
+import libxml2
+
+def canon(name):
+    return re.sub(r"[^a-zA-Z0-9_]", "_", name)
+
+def print_config(uri):
+    """print the plugin config, determine the domains"""
+
+    print """graph_title Virtual Domain Block Device I/O
+graph_vlabel Bytes read (-)/ written (+) per ${graph_period}
+graph_category Virtual Machines
+graph_info This graph shows the block device I/O of the virtual machines
+"""
+
+    conn = libvirt.openReadOnly(uri)
+    ids = conn.listDomainsID()
+    for id in ids:
+        dom = conn.lookupByID(id)
+        name = dom.name()
+        print "%s_read.label %s" % (canon(name), name)
+        print "%s_read.type DERIVE" % canon(name)
+        print "%s_read.min 0" % canon(name)
+        print "%s_read.graph no" % canon(name)
+        print "%s_write.label %s" % (canon(name), name)
+        print "%s_write.type DERIVE" % canon(name)
+        print "%s_write.min 0" % canon(name)
+        print "%s_write.negative %s_read" % (canon(name), canon(name))
+
+def get_disks(dom):
+    xml = dom.XMLDesc(0)
+    doc = None
+    try:
+        doc = libxml2.parseDoc(xml)
+    except:
+        return []
+    ctx = doc.xpathNewContext()
+    disks = []
+    try:
+        ret = ctx.xpathEval("/domain/devices/disk")
+        for node in ret:
+            devdst = None
+            for child in node.children:
+                if child.name == "target":
+                    devdst = child.prop("dev")
+            if devdst == None:
+                continue
+            disks.append(devdst)
+    finally:
+        if ctx != None:
+            ctx.xpathFreeContext()
+        if doc != None:
+            doc.freeDoc()
+    return disks
+        
+def fetch_values(uri):
+    conn = libvirt.openReadOnly(uri)
+    ids = conn.listDomainsID()
+    for id in ids:
+        rd = 0
+        wr = 0
+        dom = conn.lookupByID(id)
+        name = dom.name()
+        disks = get_disks(dom)
+        for disk in disks:
+            try:
+                rd_req, rd_bytes, wr_req, wr_bytes, errs = dom.blockStats(disk)
+
+                rd += rd_bytes
+                wr += wr_bytes
+            except TypeError:
+                print >>sys.stderr, "Cannot get blockstats for '%s' on '%s'" % (disk, name)
+        print "%s_read.value %d" % (canon(name), rd)
+        print "%s_write.value %d" % (canon(name), wr)
+
+
+def main(sys):
+    uri = os.getenv("uri")
+
+    if len(sys) > 1:
+        if sys[1] in [ 'autoconf', 'detect' ]:
+            if libvirt.openReadOnly(uri):
+                print "yes"
+                return 0
+            else:
+                print "no"
+                return 1
+        elif sys[1] == 'config':
+            print_config(uri)
+            return 0
+    fetch_values(uri)
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
+
+# vim:et:ts=4:sw=4:
