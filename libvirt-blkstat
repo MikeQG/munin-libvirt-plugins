@@ -9,13 +9,6 @@
 #
 # depends: python-libvirt, python-libxml2
 #
-# If you don't want to use the default uri use:
-# 
-# [libvirt-*]
-# env.uri qemu:///system
-#
-# in your plugin configuration
-#
 #%# capabilities=autoconf
 #%# family=contrib
 
@@ -96,7 +89,7 @@ def fetch_values(uri):
 
 
 def main(sys):
-    uri = os.getenv("uri")
+    uri = os.getenv("uri", "qemu:///system")
 
     if len(sys) > 1:
         if sys[1] in [ 'autoconf', 'detect' ]:
