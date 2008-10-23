@@ -3,7 +3,8 @@ PKG=munin-libvirt-plugins
 
 PLUGINS=libvirt-cputime \
 	libvirt-blkstat \
-	libvirt-ifstat
+	libvirt-ifstat  \
+	libvirt-mem
 
 ALL=$(PLUGINS) Makefile COPYING
 PYFILES=$(patsubst %,%.py,$(PLUGINS))
