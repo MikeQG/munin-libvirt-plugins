@@ -19,7 +19,7 @@ import libvirt
 def canon(name):
     return re.sub(r"[^a-zA-Z0-9_]", "_", name)
 
-def print_config(uri):
+def print_config(uri, stack):
     """print the plugin config, determine the domains"""
 
     print """graph_title Virtual Domain Cpu Time
@@ -28,6 +28,7 @@ graph_category Virtual Machines
 graph_info This graph shows the cpu time percentage of each virtual machine
 graph_args --base 1000 -l 0"""
 
+    draw = [ "LINE1", "AREA"][stack]
     conn = libvirt.openReadOnly(uri)
     ids = conn.listDomainsID()
     for id in ids:
@@ -36,6 +37,9 @@ graph_args --base 1000 -l 0"""
         print "%s_cputime.label %s" % (canon(name), name)
         print "%s_cputime.type DERIVE" % canon(name)
         print "%s_cputime.min 0" % canon(name)
+        print "%s_cputime.draw %s" % (canon(name), draw)
+        if draw == "AREA":
+            draw = "STACK"
 
 
 def fetch_values(uri):
@@ -53,6 +57,7 @@ def fetch_values(uri):
 
 def main(sys):
     uri = os.getenv("uri", "qemu:///system")
+    stack = [ False, True ][os.getenv("stack") == "1"]
 
     if len(sys) > 1:
         if sys[1] in [ 'autoconf', 'detect' ]:
@@ -63,7 +68,7 @@ def main(sys):
                 print "no"
                 return 1
         elif sys[1] == 'config':
-            print_config(uri)
+            print_config(uri, stack)
             return 0
     fetch_values(uri)
     return 0
