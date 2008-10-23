@@ -36,10 +36,12 @@ graph_info This graph shows the network I/O of the virtual machines"""
         print "%s_rx.type DERIVE" % canon(name)
         print "%s_rx.min 0" % canon(name)
         print "%s_rx.graph no" % canon(name)
+        print "%s_rx.draw LINE1" % canon(name)
         print "%s_tx.label %s" % (canon(name), name)
         print "%s_tx.type DERIVE" % canon(name)
         print "%s_tx.min 0" % canon(name)
         print "%s_tx.negative %s_rx" % (canon(name), canon(name))
+        print "%s_tx.draw LINE1" % canon(name)
 
 def get_ifaces(dom):
     xml = dom.XMLDesc(0)
