@@ -1,5 +1,6 @@
 VERSION=0.0.1
 PKG=munin-libvirt-plugins
+PLUGINDIR=/usr/share/munin/plugins/
 
 PLUGINS=libvirt-cputime \
 	libvirt-blkstat \
@@ -10,8 +11,8 @@ ALL=$(PLUGINS) Makefile COPYING
 PYFILES=$(patsubst %,%.py,$(PLUGINS))
 
 install: $(PLUGINS)
-	install -d  $(DESTDIR)/usr/share/munin/plugins/
-	install -m 755 $(PLUGINS) $(DESTDIR)/usr/share/munin/plugins
+	install -d  $(DESTDIR)$(PLUGINDIR)
+	install -m 755 $(PLUGINS) $(DESTDIR)$(PLUGINDIR)
 
 %.py: %
 	ln -s $< $@
