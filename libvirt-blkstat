@@ -15,6 +15,9 @@
 # env.uri qemu:///system
 #
 # in your plugin configuration
+#
+#%# capabilities=autoconf
+#%# family=contrib
 
 import re, sys, os
 import libvirt
