@@ -35,16 +35,16 @@ graph_args --base 1024 -l 0"""
         return 1
 
     ids = conn.listDomainsID()
-    type = "AREA"
+    draw = "AREA"
     for id in ids:
         dom = conn.lookupByID(id)
         name = dom.name()
         print "%s_mem.label %s" % (canon(name), name)
         print "%s_mem.type GAUGE" % canon(name)
         print "%s_mem.min 0" % canon(name)
-        print "%s_mem.draw %s" % (canon(name), type)
-        if type == "AREA":
-            type = "STACK"
+        print "%s_mem.draw %s" % (canon(name), draw)
+        if draw == "AREA":
+            draw = "STACK"
 
     hostname = conn.getHostname()
     print "host_mem.label %s (host)" % hostname
