@@ -7,7 +7,7 @@ PLUGINS=libvirt-cputime \
 	libvirt-ifstat  \
 	libvirt-mem
 
-ALL=$(PLUGINS) Makefile COPYING
+ALL=$(PLUGINS) Makefile COPYING INSTALL
 PYFILES=$(patsubst %,%.py,$(PLUGINS))
 
 install: $(PLUGINS)

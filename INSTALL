@@ -1,0 +1,13 @@
+Installation is simple:
+
+make PLUGINDIR=/etc/munin/plugins install
+/etc/init.d/munin-node restart
+
+The default uri used to connect to libvirt is "qemu:///system". This can be
+changed in the plugin configuration:
+
+cat <<EOF >/etc/munin/plugin-conf.d/libvirt
+[libvirt-*]
+env.uri xen:///
+EOF
+
