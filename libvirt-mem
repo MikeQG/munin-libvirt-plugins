@@ -21,18 +21,36 @@ def canon(name):
 
 def print_config(uri):
     """print the plugin config, determine the domains"""
-
-    print """graph_title Virtual Domain Memory Usage
-graph_vlabel Memory Usage / Bytes
-graph_category Virtual Machines
-graph_info This graph shows the current amount of memory used by each virtual machine
-graph_args --base 1024 -l 0"""
-
     try:
         conn = libvirt.openReadOnly(uri)
     except libvirt.libvirtError, err:
         print >>sys.stderr, "Error opening to %s connection: %s" % (uri, err)
         return 1
+
+    hostname = conn.getHostname()
+
+    print """graph_title Virtual Domain Memory Usage
+graph_vlabel Memory Usage / Bytes
+graph_category Virtual Machines
+graph_info This graph shows the current amount of memory used by each virtual machine
+graph_args --base 1024 -l 0
+host_mem.label %(hostname)s (host)
+host_mem.type GAUGE
+host_mem.min 0
+host_mem.draw LINE1
+total.type GAUGE
+total.label total
+total.info memory used by virtual machines on host %(hostname)s
+total.graph no
+total.min 0
+total_pc.type GAUGE
+total_pc.label used memory percentage
+total_pc.info memory in percent used by virtual machines on host %(hostname)s
+total_pc.graph no
+total_pc.min 0
+total_pc.max 100
+total_pc.warning 90
+total_pc.critical 95""" % dict(hostname=hostname)
 
     ids = conn.listDomainsID()
     draw = "AREA"
@@ -45,16 +63,11 @@ graph_args --base 1024 -l 0"""
         print "%s_mem.draw %s" % (canon(name), draw)
         if draw == "AREA":
             draw = "STACK"
-
-    hostname = conn.getHostname()
-    print "host_mem.label %s (host)" % hostname
-    print "host_mem.type GAUGE"
-    print "host_mem.min 0"
-    print "host_mem.draw LINE1"
     return 0
 
 
 def fetch_values(uri):
+    total = 0
     try:
         conn = libvirt.openReadOnly(uri)
     except libvirt.libvirtError, err:
@@ -66,8 +79,11 @@ def fetch_values(uri):
     for id in ids:
         dom = conn.lookupByID(id)
         name = dom.name()
-        mem = float(dom.info()[2]) * 1024
+        mem = dom.info()[2] * 1024
+        total += mem
         print "%s_mem.value %d" % (canon(name), mem)
+    print "total.value %d" % total
+    print "total_pc.value %.0f" % (100.0 * total / float(hostmem))
     return 0
 
 
