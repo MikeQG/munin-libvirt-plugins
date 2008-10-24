@@ -26,7 +26,15 @@ def print_config(uri, stack):
 graph_vlabel CPU Time percentage
 graph_category Virtual Machines
 graph_info This graph shows the cpu time percentage of each virtual machine
-graph_args --base 1000 -l 0"""
+graph_args --base 1000 -l 0
+total_pc.type DERIVE
+total_pc.graph no
+total_pc.min 0
+total_pc.max 100
+total_pc.label total
+total_pc.info cputime used by all virtual machines
+total_pc.warning 90
+total_pc.critical 95"""
 
     draw = [ "LINE1", "AREA"][stack]
     conn = libvirt.openReadOnly(uri)
@@ -41,10 +49,10 @@ graph_args --base 1000 -l 0"""
         if draw == "AREA":
             draw = "STACK"
 
-
 def fetch_values(uri):
     conn = libvirt.openReadOnly(uri)
     ids = conn.listDomainsID()
+    total = 0
 
     processors = float(conn.getInfo()[2])
     for id in ids:
@@ -52,7 +60,9 @@ def fetch_values(uri):
         name = dom.name()
         cputime = float(dom.info()[4])
         cputime_percentage = 1.0e-7 * cputime / processors
+        total += cputime_percentage
         print "%s_cputime.value %.0f" % (canon(name), cputime_percentage)
+    print "total_pc.value %.0f" % total
 
 
 def main(sys):
