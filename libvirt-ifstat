@@ -32,6 +32,8 @@ graph_info This graph shows the network I/O of the virtual machines"""
     for id in ids:
         dom = conn.lookupByID(id)
         name = dom.name()
+        if name == "Domain-0":
+            continue
         print "%s_rx.label %s" % (canon(name), name)
         print "%s_rx.type DERIVE" % canon(name)
         print "%s_rx.min 0" % canon(name)
@@ -77,6 +79,8 @@ def fetch_values(uri):
         wr = 0
         dom = conn.lookupByID(id)
         name = dom.name()
+        if name == "Domain-0":
+            continue
         ifaces = get_ifaces(dom)
         for iface in ifaces:
             try:
