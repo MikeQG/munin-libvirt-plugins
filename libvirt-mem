@@ -80,8 +80,10 @@ def fetch_values(uri):
         dom = conn.lookupByID(id)
         name = dom.name()
         mem = dom.info()[2] * 1024
-        total += mem
         print "%s_mem.value %d" % (canon(name), mem)
+        # ignore Xen's Dom0 when calcualting memory total and percentage
+        if name != "Domain-0":
+            total += mem
     print "total.value %d" % total
     print "total_pc.value %.0f" % (100.0 * total / float(hostmem))
     return 0
