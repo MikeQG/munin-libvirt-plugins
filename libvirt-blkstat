@@ -30,8 +30,12 @@ graph_info This graph shows the block device I/O of the virtual machines"""
     conn = libvirt.openReadOnly(uri)
     ids = conn.listDomainsID()
     for id in ids:
-        dom = conn.lookupByID(id)
-        name = dom.name()
+        try:
+            dom = conn.lookupByID(id)
+            name = dom.name()
+        except libvirt.libvirtError, err:
+            print >>sys.stderr, "Id: %s: %s" % (id, err)
+            continue
         if name == "Domain-0":
             continue
         print "%s_read.label %s" % (canon(name), name)
@@ -77,8 +81,12 @@ def fetch_values(uri):
     for id in ids:
         rd = 0
         wr = 0
-        dom = conn.lookupByID(id)
-        name = dom.name()
+        try:
+            dom = conn.lookupByID(id)
+            name = dom.name()
+        except libvirt.libvirtError, err:
+            print >>sys.stderr, "Id: %s: %s" % (id, err)
+            continue
         if name == "Domain-0":
             continue
         disks = get_disks(dom)

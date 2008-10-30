@@ -40,8 +40,12 @@ total_pc.critical 95"""
     conn = libvirt.openReadOnly(uri)
     ids = conn.listDomainsID()
     for id in ids:
-        dom = conn.lookupByID(id)
-        name = dom.name()
+        try:
+            dom = conn.lookupByID(id)
+            name = dom.name()
+        except libvirt.libvirtError, err:
+            print >>sys.stderr, "Id: %s: %s" % (id, err)
+            continue
         print "%s_cputime.label %s" % (canon(name), name)
         print "%s_cputime.type DERIVE" % canon(name)
         print "%s_cputime.min 0" % canon(name)
@@ -56,8 +60,12 @@ def fetch_values(uri):
 
     processors = float(conn.getInfo()[2])
     for id in ids:
-        dom = conn.lookupByID(id)
-        name = dom.name()
+        try:
+            dom = conn.lookupByID(id)
+            name = dom.name()
+        except libvirt.libvirtError, err:
+            print >>sys.stderr, "Id: %s: %s" % (id, err)
+            continue
         cputime = float(dom.info()[4])
         cputime_percentage = 1.0e-7 * cputime / processors
         total += cputime_percentage
