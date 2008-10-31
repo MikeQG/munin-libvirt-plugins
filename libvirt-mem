@@ -61,6 +61,8 @@ total_pc.critical 95""" % dict(hostname=hostname)
         except libvirt.libvirtError, err:
             print >>sys.stderr, "Id: %s: %s" % (id, err)
             continue
+        if name == "Domain-0":
+            continue
         print "%s_mem.label %s" % (canon(name), name)
         print "%s_mem.type GAUGE" % canon(name)
         print "%s_mem.min 0" % canon(name)
@@ -87,11 +89,11 @@ def fetch_values(uri):
         except libvirt.libvirtError, err:
             print >>sys.stderr, "Id: %s: %s" % (id, err)
             continue
+        if name == "Domain-0":
+            continue
         mem = dom.info()[2] * 1024
         print "%s_mem.value %d" % (canon(name), mem)
-        # ignore Xen's Dom0 when calcualting memory total and percentage
-        if name != "Domain-0":
-            total += mem
+        total += mem
     print "total.value %d" % total
     print "total_pc.value %.0f" % (100.0 * total / float(hostmem))
     return 0
