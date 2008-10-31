@@ -46,6 +46,8 @@ total_pc.critical 95"""
         except libvirt.libvirtError, err:
             print >>sys.stderr, "Id: %s: %s" % (id, err)
             continue
+        if name == "Domain-0":
+            continue
         print "%s_cputime.label %s" % (canon(name), name)
         print "%s_cputime.type DERIVE" % canon(name)
         print "%s_cputime.min 0" % canon(name)
@@ -65,6 +67,8 @@ def fetch_values(uri):
             name = dom.name()
         except libvirt.libvirtError, err:
             print >>sys.stderr, "Id: %s: %s" % (id, err)
+            continue
+        if name == "Domain-0":
             continue
         cputime = float(dom.info()[4])
         cputime_percentage = 1.0e-7 * cputime / processors
