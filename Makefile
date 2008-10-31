@@ -23,5 +23,7 @@ check: $(PYFILES)
 clean:
 	rm -f *.py *.pyc
 
-dist:
+dist: clean check
 	git-archive --format=tar --prefix=$(PKG)-$(VERSION)/ HEAD | gzip -c > ../$(PKG)-$(VERSION).tar.gz
+
+.PHONY: clean check dist install
