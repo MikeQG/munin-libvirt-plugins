@@ -52,6 +52,7 @@ total_pc.critical 95"""
         print "%s_cputime.type DERIVE" % canon(name)
         print "%s_cputime.min 0" % canon(name)
         print "%s_cputime.draw %s" % (canon(name), draw)
+        print "%s_cputime.info percent of cputime used by virtual machine '%s'" % (canon(name), name)
         if draw == "AREA":
             draw = "STACK"
 
