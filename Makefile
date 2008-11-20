@@ -1,4 +1,4 @@
-VERSION=0.0.5
+VERSION=0.0.6
 PACKAGE=munin-libvirt-plugins
 SBINDIR=/usr/sbin
 PLUGINDIR=/usr/share/munin/plugins
