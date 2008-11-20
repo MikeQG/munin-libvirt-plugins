@@ -2,13 +2,29 @@ This is a set of munin plugins to monitor virtual machines managed via libvirt.
 
 See INSTALL for installation instructions.
 
-The default uri used to connect to libvirt is "qemu:///system". This can be
-changed in the plugin configuration:
+== Setting things up ==
+
+Autoconfiguration is simple. Run:
+
+    munin-libvirt-plugins-detect
+
+this will try to detect the hypervisor, create an apropriate configuration and
+enable all plugins.
+
+If you prefer to configure things by hand: The default uri used to connect to
+libvirt is "qemu:///system". This can be changed in the plugin configuration:
 
 cat <<EOF >/etc/munin/plugin-conf.d/libvirt
 [libvirt-*]
 env.uri xen:///
 EOF
+
+Enabling plugins by hand is the same as with any other munin plugin:
+
+   ln -s /usr/share/munin/plugins/libvirt-<plugin> /etc/munin/plugins/
+   /etc/init.d/munin-node restart
+
+== Plugin Configuration ==
 
 libvirt-mem and libvirt-cputime support limits[1] for critical and warning
 values. These are set to 90% (warning) and 95% (critical) by default. However
