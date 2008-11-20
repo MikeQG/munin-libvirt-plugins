@@ -15,8 +15,9 @@ PYFILES=$(patsubst %,%.py,$(PLUGINS) $(DETECT))
 all: $(DETECT)
 
 install: build
-	install -d  $(DESTDIR)$(PLUGINDIR)
+	install -d $(DESTDIR)$(PLUGINDIR)
 	install -m 755 $(PLUGINS) $(DESTDIR)$(PLUGINDIR)
+	install -d $(DESTDIR)$(SBINDIR)
 	install -m 755 $(DETECT) $(DESTDIR)$(SBINDIR)
 
 $(DETECT): $(DETECT).in
