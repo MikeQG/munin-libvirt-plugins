@@ -1,0 +1,119 @@
+#/!/usr/bin/python
+# vim: set fileencoding=utf-8 :
+#
+# Configure and enable munin libvirt plugins
+#
+# Copyright 2008 Guido Guenther <agx@sigxcpu.org>
+#
+# Licesnse: GPLv2
+#
+# Detect connection uri and enable plugins
+
+import os
+import sys
+from optparse import OptionParser
+
+try:
+    import libvirt
+    has_libvirt = True
+except ImportError:
+    has_libvirt = False
+
+URIS = [ "xen:///", "qemu:///system" ]
+PLUGIN_CONF = "::MUNINCONFDIR::/plugin-conf.d/libvirt"
+PLUGINS = [ "blkstat",  "cputime", "ifstat", "mem" ]
+PLUGIN_SRC = "::PLUGINDIR::"
+PLUGIN_DST = "::MUNINCONFDIR::/plugins/"
+
+def check_uris(uris, force=False):
+    detected = None
+
+    for uri in uris:
+        try:
+            libvirt.openReadOnly(uri)
+            detected = uri
+            break
+        except libvirt.libvirtError, err:
+            pass
+
+    if detected:
+        print "Hypervisor at %s detected." % detected
+        if not os.path.exists(PLUGIN_CONF) or force:
+            try:
+                conf = file(PLUGIN_CONF, "w+")
+                print >>conf, "[libvirt-*]"
+                print >>conf, "env.uri %s""" % detected
+                conf.close()
+            except IOError, err:
+                print >>sys.stderr, err
+                return 1
+        else:
+            print >>sys.stderr, "Plugin configuration '%s' already exists - doing nothing" % PLUGIN_CONF
+    return 0
+
+
+def enable_plugins(force=False):
+    for plugin in map(lambda x: "libvirt-" + x, PLUGINS):
+        src = os.path.join(PLUGIN_SRC, plugin)
+        dst = os.path.join(PLUGIN_DST, plugin)
+        if force:
+            try:
+                os.unlink(dst)
+            except OSError:
+                pass
+        if os.path.exists(dst):
+            print >>sys.stderr, "Plugin '%s' already enabled - doing nothing" % plugin
+        else:
+            print >>sys.stderr, "Enabling plugin '%s'" % plugin
+            os.symlink(src, dst)
+    return 0
+
+
+def restart_munin_node():
+    act = dict(service='munin-node', action='restart')
+
+    for path in [ '/usr/sbin/invoke-rc.d',
+                  '/sbin/service' ]:
+        if os.path.exists(path):
+            act['exec'] = path
+            ret = os.system('%(exec)s %(service)s %(action)s' % act)
+            return ret
+    else:
+        if os.path.exists('/etc/init.d/%(service)s' % act):
+            ret = os.system('/etc/init.d/%(service)s %(action)s' % act)
+            return ret
+    return 1
+
+
+def main(args):
+    parser = OptionParser(usage="%prog [-f] [uris]", version="%prog ::VERSION::")
+    parser.add_option("-f", "--force", action="store_true", dest="force", default=False,
+                      help="overwrite files and symlinks")
+    parser.add_option("-r", "--restart", action="store_true", dest="restart", default=False,
+                      help="restart munin-node to let changes take effect")
+    (options, args) = parser.parse_args(args)
+
+    if len(args) > 1:
+        uris = args[1:]
+    else:
+        uris = URIS
+
+    if not has_libvirt:
+        print >>sys.stderr, "Libvirt not available."
+        return 1
+
+    ret = check_uris(uris, options.force)
+    if ret:
+        return ret
+    ret = enable_plugins(options.force)
+    if ret:
+        return ret
+    if options.restart:
+        ret = restart_munin_node()
+    return ret
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
+
+# vim:et:ts=4:sw=4:
