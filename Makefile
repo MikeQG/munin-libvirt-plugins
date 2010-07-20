@@ -36,6 +36,6 @@ clean:
 	rm -f *.py *.pyc $(DETECT)
 
 dist: clean check
-	git-archive --format=tar --prefix=$(PACKAGE)-$(VERSION)/ HEAD | gzip -c > ../$(PACKAGE)-$(VERSION).tar.gz
+	git archive --format=tar --prefix=$(PACKAGE)-$(VERSION)/ HEAD | gzip -c > ../$(PACKAGE)-$(VERSION).tar.gz
 
 .PHONY: clean check dist install build
