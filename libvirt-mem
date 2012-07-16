@@ -3,17 +3,18 @@
 #
 # Munin plugin to show the amount of memory used by libvirt managed virtual
 # machines
-# 
-# Copyright 2008 Guido Guenther <agx@sigxcpu.org>
+#
+# Copyright 2008,2012 Guido Guenther <agx@sigxcpu.org>
 #
 # License: GPLv2
 #
-# depends: python-libvirt
+# depends: python-libvirt, python-libxml2
 #
 #%# capabilities=autoconf
 #%# family=contrib
 
 import re, sys, os
+import libxml2
 import libvirt
 
 def canon(name):
@@ -60,7 +61,36 @@ total_max_pc.type GAUGE
 total_max_pc.label total maximum memory percentage
 total_max_pc.graph no
 total_max_pc.info maximum memory in percent virtual machines can balloon to on host '%(hostname)s'
-total_max_pc.min 0""" % dict(hostname=hostname)
+total_max_pc.min 0
+total_min_guarantee.type GAUGE
+total_min_guarantee.label total mem minimum guarantee
+total_min_guarantee.info min_guarantee minimum amount of memory guaranteed to all virtual machines on host '%(hostname)s'
+total_min_guarantee.min 0
+total_min_guarantee_pc.type GAUGE
+total_min_guarantee_pc.label total mem minimum guarantee percentage
+total_min_guarantee_pc.graph no
+total_min_guarantee_pc.info min_guarantee minimum amount of memory in percent guaranteed to all virtual machines on host '%(hostname)s'
+total_min_guarantee_pc.min 0
+total_hard_limit.type GAUGE
+total_hard_limit.label total mem hard limit
+total_hard_limit.info memory hard_limit of all virtual machines on host '%(hostname)s'
+total_hard_limit.min 0
+total_hard_limit_pc.type GAUGE
+total_hard_limit_pc.label total mem hard limit percentage
+total_hard_limit_pc.graph no
+total_hard_limit_pc.info memory hard_limit percentage of all virtual machines on host '%(hostname)s'
+total_hard_limit_pc.min 0
+total_soft_limit.type GAUGE
+total_soft_limit.label total mem soft limit
+total_soft_limit.info memory soft_limit of all virtual machines on host '%(hostname)s'
+total_soft_limit.min 0
+total_soft_limit_pc.type GAUGE
+total_soft_limit_pc.label total mem soft limit percentage
+total_soft_limit_pc.graph no
+total_soft_limit_pc.info memory soft_limit percentage of all virtual machines on host '%(hostname)s'
+total_soft_limit_pc.min 0
+
+""" % dict(hostname=hostname)
 
     ids = conn.listDomainsID()
     draw = "AREA"
@@ -82,10 +112,42 @@ total_max_pc.min 0""" % dict(hostname=hostname)
             draw = "STACK"
     return 0
 
+def get_memtune(dom):
+    memtune = { 'min_guarantee': 0, 'soft_limit': 0, 'hard_limit': 0 }
+    xml = dom.XMLDesc(0)
+
+    try:
+        doc = libxml2.parseDoc(xml)
+    except:
+        return []
+
+    ctx = doc.xpathNewContext()
+    try:
+        for key in memtune:
+            ret = ctx.xpathEval("/domain/memtune/%s" % key)
+            try:
+                for child in ret[0].children:
+                    memtune[key] = int(child.content)
+                    break
+            except IndexError:
+                    # key not found in xml
+                    pass
+    finally:
+        if ctx != None:
+            ctx.xpathFreeContext()
+        if doc != None:
+            doc.freeDoc()
+    return memtune
+
 
 def fetch_values(uri):
+    """Fetch values in the <memtune/> block"""
     total = 0
     total_max = 0
+    min_guarantee = 0
+    hard_limit = 0
+    soft_limit = 0
+
     try:
         conn = libvirt.openReadOnly(uri)
     except libvirt.libvirtError, err:
@@ -109,10 +171,21 @@ def fetch_values(uri):
         total += mem
         total_max += maxmem
         print "%s_mem.value %d" % (canon(name), mem)
+        memtune = get_memtune(dom)
+        min_guarantee += memtune['min_guarantee'] * 1024
+        hard_limit += memtune['hard_limit'] * 1024
+        soft_limit += memtune['soft_limit'] * 1024
+
     print "total.value %d" % total
     print "total_pc.value %.0f" % (100.0 * total / float(hostmem))
     print "total_max.value %d" % total_max
     print "total_max_pc.value %.0f" % (100.0 * total_max / float(hostmem))
+    print "total_min_guarantee.value %d" % min_guarantee
+    print "total_min_guarantee_pc.value %.0f" % (100.0 * min_guarantee / float(hostmem))
+    print "total_soft_limit.value %d" % soft_limit
+    print "total_soft_limit_pc.value %.0f" % (100.0 * soft_limit / float(hostmem))
+    print "total_hard_limit.value %d" % hard_limit
+    print "total_hard_limit_pc.value %.0f" % (100.0 * hard_limit / float(hostmem))
     return 0
 
 
