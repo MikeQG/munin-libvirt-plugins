@@ -95,7 +95,7 @@ def fetch_values(uri):
                 stats = dom.interfaceStats(iface)
                 rd += stats[0]
                 wr += stats[4]
-            except TypeError:
+            except:
                 print >>sys.stderr, "Cannot get ifstats for '%s' on '%s'" % (iface, name)
         print "%s_rx.value %d" % (canon(name), rd)
         print "%s_tx.value %d" % (canon(name), wr)
